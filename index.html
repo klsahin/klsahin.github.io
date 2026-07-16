@@ -27,6 +27,7 @@
   --line:       #DDE3E7;   /* borders + grid */
   --accent:     #E8500A;   /* safety orange */
   --accent-soft:#FDE9DD;   /* orange wash for tags */
+  --accent2:    #3D6E8F;   /* steel blue — goal tree in fig. 01 */
 
   --display: "Archivo", sans-serif;
   --body:    "IBM Plex Sans", sans-serif;
@@ -316,8 +317,8 @@ footer { padding: 56px 0 48px; }
          With prefers-reduced-motion, it renders a single static tree instead. -->
     <div class="rrt-panel" aria-hidden="true">
       <div class="rrt-head">
-        <span>fig. 01 — sampling-based planner</span>
-        <span><span class="dot">●</span> RRT, live</span>
+        <span>fig. 01 — bidirectional sampling planner</span>
+        <span><span class="dot">●</span> RRT-Connect, live</span>
       </div>
       <canvas id="rrt" width="520" height="400"></canvas>
     </div>
@@ -602,14 +603,15 @@ footer { padding: 56px 0 48px; }
       <a href="https://github.com/klsahin" target="_blank" rel="noopener">github.com/klsahin</a>
       <a href="https://linkedin.com/in/karla-sahin/" target="_blank" rel="noopener">linkedin.com/in/karla-sahin</a>
     </div>
-    <div class="colophon">© 2026 Karla Sahin · hand-built HTML/CSS, hosted on GitHub Pages · fig. 01 is a live RRT</div>
+    <div class="colophon">© 2026 Karla Sahin · hand-built HTML/CSS, hosted on GitHub Pages · fig. 01 is a live RRT-Connect</div>
   </div>
 </footer>
 
-<!-- ================= RRT ANIMATION =================
-     Grows a rapidly-exploring random tree from a start node toward a goal,
-     highlights the found path, pauses, then restarts with new obstacles.
-     Static single frame when prefers-reduced-motion is set. -->
+<!-- ================= RRT-CONNECT ANIMATION =================
+     Ported from src/planner.py in the 16-350 final project (bmc209/16350-Final-Project):
+     same structure — ExtendResult enum, Node(parent, cost), new_config / extend /
+     connect / backtrack / construct_path_connect, and the tree-swap main loop.
+     Differences from the Python original are marked with "// DEVIATION". -->
 <script>
 (function () {
   const canvas = document.getElementById("rrt");
@@ -619,87 +621,169 @@ footer { padding: 56px 0 48px; }
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const css = getComputedStyle(document.documentElement);
-  const INK    = css.getPropertyValue("--ink").trim()    || "#17222B";
-  const SLATE  = css.getPropertyValue("--slate").trim()  || "#5C6B78";
-  const LINE   = css.getPropertyValue("--line").trim()   || "#DDE3E7";
-  const ACCENT = css.getPropertyValue("--accent").trim() || "#E8500A";
+  const INK    = css.getPropertyValue("--ink").trim()     || "#17222B";
+  const SLATE  = css.getPropertyValue("--slate").trim()   || "#5C6B78";
+  const STEEL  = css.getPropertyValue("--accent2").trim() || "#3D6E8F";
+  const LINE   = css.getPropertyValue("--line").trim()    || "#DDE3E7";
+  const ACCENT = css.getPropertyValue("--accent").trim()  || "#E8500A";
 
-  const STEP = 22, GOAL_R = 14, MAX_NODES = 420;
-  let nodes, parent, obstacles, start, goal, found, pathIdx, timer;
+  // constants to experiment with            (planner.py equivalents)
+  const MAX_ITERATIONS = 500;    // RRT iterations          — same as planner.py
+  const EPSILON        = 22;    // max step size            — px here, radians there
+  const GOAL_R         = 14;    // goal marker radius (drawing only)
+
+  const ExtendResult = { TRAPPED: 0, ADVANCED: 1, REACHED: 2 };
+
+  // Node dataclass: angles -> q (a 2D point instead of joint angles)
+  function Node(q, parent = -1, cost = 0.0) { return { q, parent, cost }; }
+
+  let treeA, treeB, obstacles, start, goal, iterations, foundPath, timer;
 
   function rand(a, b) { return a + Math.random() * (b - a); }
+
+  // PLANNER HELPERS (RRT basics) — mirrors planner.py
+
+  function random_config() { return { x: rand(0, W), y: rand(0, H) }; }
+
+  // euclidean distance (2D workspace instead of configuration space)
   function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
 
-  function inObstacle(p) {
-    return obstacles.some(o => p.x > o.x && p.x < o.x + o.w && p.y > o.y && p.y < o.y + o.h);
+  function nearest_neighbor(tree, q) {
+    let best_index = 0;
+    let min_dist = Infinity; // assume infinity start
+    for (let i = 0; i < tree.length; i++) {
+      const d = dist(tree[i].q, q);
+      if (d < min_dist) { min_dist = d; best_index = i; }
+    }
+    return best_index;
   }
-  function segmentHits(a, b) {
-    // sample along the segment; fine for a decorative demo
-    const n = Math.ceil(dist(a, b) / 4);
+
+  // DEVIATION: planner.py calls pybullet's collision detection on the arm;
+  // here it's point-in-rectangle, sampled along the segment so edges can't
+  // tunnel through obstacle corners.
+  function in_obstacle(pt) {
+    return obstacles.some(o => pt.x > o.x && pt.x < o.x + o.w &&
+                               pt.y > o.y && pt.y < o.y + o.h);
+  }
+  function is_collision_free(q_near, q_new) {
+    const n = Math.ceil(dist(q_near, q_new) / 4);
     for (let i = 1; i <= n; i++) {
       const t = i / n;
-      if (inObstacle({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t })) return true;
+      const pt = { x: q_near.x + (q_new.x - q_near.x) * t,
+                   y: q_near.y + (q_new.y - q_near.y) * t };
+      if (in_obstacle(pt)) return false;
     }
-    return false;
+    return true;
   }
+
+  // qnew = epsilon from qnear to q, or just q if distance < epsilon
+  function new_config(q, q_near) {
+    const d = dist(q_near, q);
+    let q_new;
+    if (d < EPSILON) {
+      q_new = { x: q.x, y: q.y };
+    } else {
+      // if q is too far, make epsilon progress towards it
+      q_new = { x: q_near.x + EPSILON * (q.x - q_near.x) / d,
+                y: q_near.y + EPSILON * (q.y - q_near.y) / d };
+    }
+    if (is_collision_free(q_near, q_new)) return q_new;
+    return null;
+  }
+
+  function extend(tree, q) {
+    const near_idx = nearest_neighbor(tree, q);
+    const q_near = tree[near_idx].q;
+    const q_new = new_config(q, q_near);
+
+    if (q_new === null) return ExtendResult.TRAPPED;
+
+    const cost = tree[near_idx].cost + dist(q_near, q_new);
+    tree.push(Node(q_new, near_idx, cost));
+    drawEdge(q_near, q_new, tree.color, 1);          // draw-as-you-grow
+    // DEVIATION: planner.py returns REACHED when within EPSILON of q, which can
+    // leave an unchecked ~2*EPSILON junction segment in the merged path (harmless
+    // at 0.05 rad, visible at 22 px). Requiring exact arrival fixes it: new_config
+    // already snaps to q when within EPSILON, so this costs one extra extend.
+    return dist(q_new, q) < 1e-9 ? ExtendResult.REACHED : ExtendResult.ADVANCED;
+  }
+
+  function connect(tree, q) {
+    let result = extend(tree, q);
+    while (result === ExtendResult.ADVANCED) {
+      result = extend(tree, q);
+    }
+    return result;
+  }
+
+  // BACKTRACKING — mirrors planner.py
+  function backtrack(tree) {
+    const path = [];
+    let i = tree.length - 1;
+    while (i !== -1) {
+      path.push(tree[i].q);
+      i = tree[i].parent;
+    }
+    path.reverse();
+    return path;
+  }
+
+  function construct_path_connect(tree_a, tree_b) {
+    // merging two paths for rrt-connect
+    const path_a = backtrack(tree_a);
+    const path_b = backtrack(tree_b);
+    path_b.reverse();
+    return path_a.concat(path_b.slice(1)); // ignore duplicate
+  }
+
+  // SETUP / DRAWING (widget-specific, no planner.py equivalent)
 
   function reset() {
     obstacles = [];
     const count = 4 + Math.floor(Math.random() * 3);
     for (let i = 0; i < count; i++) {
-      obstacles.push({ x: rand(80, W - 180), y: rand(30, H - 110), w: rand(40, 110), h: rand(40, 100) });
+      obstacles.push({ x: rand(80, W - 180), y: rand(30, H - 110),
+                       w: rand(40, 110), h: rand(40, 100) });
     }
     start = { x: 36, y: H - 36 };
     goal  = { x: W - 46, y: 46 };
-    while (inObstacle(start)) start.y -= 10;
-    while (inObstacle(goal))  goal.y  += 10;
-    nodes = [start]; parent = [-1]; found = -1; pathIdx = null;
+    while (in_obstacle(start)) start.y -= 10;
+    while (in_obstacle(goal))  goal.y  += 10;
+
+    treeA = [Node(start, -1, 0.0)]; treeA.color = SLATE; treeA.isStartTree = true;
+    treeB = [Node(goal,  -1, 0.0)]; treeB.color = STEEL; treeB.isStartTree = false;
+    iterations = 0; foundPath = null;
     drawBase();
   }
 
-  function extend() {
-    if (nodes.length > MAX_NODES) { reset(); return; }
-    // goal bias 8%
-    const target = Math.random() < 0.08 ? goal : { x: rand(0, W), y: rand(0, H) };
-    let ni = 0, best = Infinity;
-    for (let i = 0; i < nodes.length; i++) {
-      const d = dist(nodes[i], target);
-      if (d < best) { best = d; ni = i; }
-    }
-    const from = nodes[ni];
-    const d = dist(from, target);
-    const p = d <= STEP ? target : {
-      x: from.x + (target.x - from.x) / d * STEP,
-      y: from.y + (target.y - from.y) / d * STEP
-    };
-    if (inObstacle(p) || segmentHits(from, p)) return;
-    nodes.push(p); parent.push(ni);
-    drawEdge(from, p, LINE, 1);
-    drawNode(p, SLATE, 1.5);
-    if (dist(p, goal) < GOAL_R) {
-      found = nodes.length - 1;
-      tracePath();
-    }
-  }
+  // one iteration of the rrt_connect main loop from planner.py
+  function rrt_connect_step() {
+    iterations++;
+    if (iterations > MAX_ITERATIONS) { reset(); return; }
 
-  function tracePath() {
-    pathIdx = [];
-    let i = found;
-    while (i !== -1) { pathIdx.push(i); i = parent[i]; }
-    // redraw path edges in accent
-    for (let k = 0; k < pathIdx.length - 1; k++) {
-      drawEdge(nodes[pathIdx[k]], nodes[pathIdx[k + 1]], ACCENT, 2.5);
+    const q_rand = random_config();
+    const a_result = extend(treeA, q_rand);
+
+    if (a_result !== ExtendResult.TRAPPED) {
+      // connect the other tree toward the newest node
+      const b_result = connect(treeB, treeA[treeA.length - 1].q);
+      if (b_result === ExtendResult.REACHED) {
+        foundPath = treeA.isStartTree
+          ? construct_path_connect(treeA, treeB)
+          : construct_path_connect(treeB, treeA);
+        drawPath(foundPath);
+        return;
+      }
     }
-    drawMarkers();
+    // swap trees — mirrors the picker/placer swap in planner.py
+    [treeA, treeB] = [treeB, treeA];
   }
 
   function drawBase() {
     ctx.clearRect(0, 0, W, H);
-    // grid
     ctx.strokeStyle = "rgba(221,227,231,.55)"; ctx.lineWidth = 1;
     for (let x = 0; x <= W; x += 24) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
     for (let y = 0; y <= H; y += 24) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
-    // obstacles
     ctx.fillStyle = "rgba(23,34,43,.10)";
     ctx.strokeStyle = SLATE;
     obstacles.forEach(o => { ctx.fillRect(o.x, o.y, o.w, o.h); ctx.strokeRect(o.x, o.y, o.w, o.h); });
@@ -707,21 +791,23 @@ footer { padding: 56px 0 48px; }
   }
 
   function drawMarkers() {
-    // start
     drawNode(start, INK, 5);
-    // goal ring
     ctx.beginPath(); ctx.arc(goal.x, goal.y, GOAL_R, 0, Math.PI * 2);
     ctx.strokeStyle = ACCENT; ctx.lineWidth = 2; ctx.stroke();
     drawNode(goal, ACCENT, 4);
   }
 
-  function drawNode(p, color, r) {
-    ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+  function drawNode(pt, color, r) {
+    ctx.beginPath(); ctx.arc(pt.x, pt.y, r, 0, Math.PI * 2);
     ctx.fillStyle = color; ctx.fill();
   }
   function drawEdge(a, b, color, w) {
     ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
     ctx.strokeStyle = color; ctx.lineWidth = w; ctx.stroke();
+  }
+  function drawPath(path) {
+    for (let k = 0; k < path.length - 1; k++) drawEdge(path[k], path[k + 1], ACCENT, 2.5);
+    drawMarkers();
   }
 
   reset();
@@ -729,18 +815,17 @@ footer { padding: 56px 0 48px; }
   if (reduced) {
     // static: run to completion instantly, no animation loop
     let guard = 0;
-    while (found === -1 && guard < 6000) { extend(); guard++; }
+    while (foundPath === null && guard < 5 * MAX_ITERATIONS) { rrt_connect_step(); guard++; }
     return;
   }
 
   function tick() {
-    if (found !== -1) {
+    if (foundPath !== null) {
       clearInterval(timer);
       setTimeout(() => { reset(); timer = setInterval(tick, 16); }, 2600);
       return;
     }
-    // a few extensions per frame keeps it lively without being frantic
-    for (let i = 0; i < 3; i++) if (found === -1) extend();
+    rrt_connect_step();
   }
   timer = setInterval(tick, 16);
 })();
