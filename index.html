@@ -27,7 +27,7 @@
   --line:       #DDE3E7;   /* borders + grid */
   --accent:     #E8500A;   /* safety orange */
   --accent-soft:#FDE9DD;   /* orange wash for tags */
-  --accent2:    #3D6E8F;   /* steel blue — goal tree in fig. 01 */
+  --accent2:    #3D6E8F;   /* steel blue — RRT-Connect goal tree in fig. 01 */
 
   --display: "Archivo", sans-serif;
   --body:    "IBM Plex Sans", sans-serif;
@@ -135,6 +135,18 @@ h1 {
 }
 .rrt-head .dot { color: var(--accent); }
 #rrt { display: block; width: 100%; height: auto; }
+.rrt-controls { display: flex; gap: 6px; }
+.rrt-btn {
+  font-family: var(--mono); font-size: 11px; cursor: pointer;
+  padding: 3px 10px; border-radius: 999px;
+  border: 1px solid var(--line); background: transparent; color: var(--slate);
+}
+.rrt-btn:hover { border-color: var(--slate); }
+.rrt-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.rrt-stats {
+  padding: 7px 12px; border-top: 1px solid var(--line);
+  font-family: var(--mono); font-size: 11px; color: var(--slate);
+}
 
 /* ============================================================
    SECTIONS
@@ -313,14 +325,19 @@ footer { padding: 56px 0 48px; }
       </div>
     </div>
 
-    <!-- Signature element: live RRT exploration (see script at bottom).
-         With prefers-reduced-motion, it renders a single static tree instead. -->
-    <div class="rrt-panel" aria-hidden="true">
+    <!-- Signature element: live sampling-based planners (see script at bottom).
+         Toggle between RRT and RRT-Connect; both ported from src/planner.py.
+         With prefers-reduced-motion, it renders a static solved tree instead. -->
+    <div class="rrt-panel">
       <div class="rrt-head">
-        <span>fig. 01 — bidirectional sampling planner</span>
-        <span><span class="dot">●</span> RRT-Connect, live</span>
+        <span>fig. 01 — sampling-based planners, live</span>
+        <div class="rrt-controls" role="group" aria-label="Planner selection">
+          <button class="rrt-btn active" data-planner="rrt">RRT</button>
+          <button class="rrt-btn" data-planner="rrt_connect">RRT-Connect</button>
+        </div>
       </div>
-      <canvas id="rrt" width="520" height="400"></canvas>
+      <canvas id="rrt" width="520" height="400" aria-hidden="true"></canvas>
+      <div class="rrt-stats" id="rrt-stats">iterations 0 · vertices 1</div>
     </div>
   </div>
 </header>
@@ -603,20 +620,22 @@ footer { padding: 56px 0 48px; }
       <a href="https://github.com/klsahin" target="_blank" rel="noopener">github.com/klsahin</a>
       <a href="https://linkedin.com/in/karla-sahin/" target="_blank" rel="noopener">linkedin.com/in/karla-sahin</a>
     </div>
-    <div class="colophon">© 2026 Karla Sahin · hand-built HTML/CSS, hosted on GitHub Pages · fig. 01 is a live RRT-Connect</div>
+    <div class="colophon">© 2026 Karla Sahin · hand-built HTML/CSS, hosted on GitHub Pages · fig. 01 runs live RRT / RRT-Connect</div>
   </div>
 </footer>
 
-<!-- ================= RRT-CONNECT ANIMATION =================
-     Ported from src/planner.py in the 16-350 final project (bmc209/16350-Final-Project):
-     same structure — ExtendResult enum, Node(parent, cost), new_config / extend /
-     connect / backtrack / construct_path_connect, and the tree-swap main loop.
-     Differences from the Python original are marked with "// DEVIATION". -->
+<!-- ================= PLANNER ANIMATION: RRT + RRT-CONNECT =================
+     Both planners ported from src/planner.py in the 16-350 final project
+     (bmc209/16350-Final-Project): same ExtendResult enum, Node(parent, cost),
+     shared new_config / extend / connect / backtrack helpers, the goal-biased
+     rrt() loop, and the tree-swap rrt_connect() loop. Differences from the
+     Python original are marked with "// DEVIATION". -->
 <script>
 (function () {
   const canvas = document.getElementById("rrt");
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
+  const statsEl = document.getElementById("rrt-stats");
   const W = canvas.width, H = canvas.height;
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -624,12 +643,12 @@ footer { padding: 56px 0 48px; }
   const INK    = css.getPropertyValue("--ink").trim()     || "#17222B";
   const SLATE  = css.getPropertyValue("--slate").trim()   || "#5C6B78";
   const STEEL  = css.getPropertyValue("--accent2").trim() || "#3D6E8F";
-  const LINE   = css.getPropertyValue("--line").trim()    || "#DDE3E7";
   const ACCENT = css.getPropertyValue("--accent").trim()  || "#E8500A";
 
-  // constants to experiment with            (planner.py equivalents)
-  const MAX_ITERATIONS = 500;    // RRT iterations          — same as planner.py
+  // constants to experiment with           (planner.py equivalents)
+  const MAX_ITERATIONS = 500;   // RRT iterations           — same as planner.py
   const EPSILON        = 22;    // max step size            — px here, radians there
+  const GOAL_BIAS      = 0.20;  // probability of sampling goal directly — same
   const GOAL_R         = 14;    // goal marker radius (drawing only)
 
   const ExtendResult = { TRAPPED: 0, ADVANCED: 1, REACHED: 2 };
@@ -637,9 +656,18 @@ footer { padding: 56px 0 48px; }
   // Node dataclass: angles -> q (a 2D point instead of joint angles)
   function Node(q, parent = -1, cost = 0.0) { return { q, parent, cost }; }
 
+  let planner = "rrt";   // "rrt" | "rrt_connect"
   let treeA, treeB, obstacles, start, goal, iterations, foundPath, timer;
 
   function rand(a, b) { return a + Math.random() * (b - a); }
+
+  // random.gauss equivalent (Box-Muller) for the rrt() goal bias
+  function gauss(mu, sigma) {
+    let u = 0, v = 0;
+    while (u === 0) u = Math.random();
+    while (v === 0) v = Math.random();
+    return mu + sigma * Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
 
   // PLANNER HELPERS (RRT basics) — mirrors planner.py
 
@@ -736,27 +764,35 @@ footer { padding: 56px 0 48px; }
     return path_a.concat(path_b.slice(1)); // ignore duplicate
   }
 
-  // SETUP / DRAWING (widget-specific, no planner.py equivalent)
+  // SINGLE-QUERY PLANNERS — one iteration per animation tick
 
-  function reset() {
-    obstacles = [];
-    const count = 4 + Math.floor(Math.random() * 3);
-    for (let i = 0; i < count; i++) {
-      obstacles.push({ x: rand(80, W - 180), y: rand(30, H - 110),
-                       w: rand(40, 110), h: rand(40, 100) });
+  // one iteration of the rrt() main loop from planner.py
+  function rrt_step() {
+    iterations++;
+    if (iterations > MAX_ITERATIONS) { reset(); return; }
+
+    let q_rand;
+    if (Math.random() < GOAL_BIAS) {
+      // gaussian cloud around the goal — mirrors [g + random.gauss(0, 0.05) ...]
+      q_rand = { x: goal.x + gauss(0, EPSILON), y: goal.y + gauss(0, EPSILON) };
+    } else {
+      q_rand = random_config();
     }
-    start = { x: 36, y: H - 36 };
-    goal  = { x: W - 46, y: 46 };
-    while (in_obstacle(start)) start.y -= 10;
-    while (in_obstacle(goal))  goal.y  += 10;
+    extend(treeA, q_rand);
 
-    treeA = [Node(start, -1, 0.0)]; treeA.color = SLATE; treeA.isStartTree = true;
-    treeB = [Node(goal,  -1, 0.0)]; treeB.color = STEEL; treeB.isStartTree = false;
-    iterations = 0; foundPath = null;
-    drawBase();
+    if (dist(treeA[treeA.length - 1].q, goal) < EPSILON) {
+      const last = treeA[treeA.length - 1];
+      const q_new = new_config(goal, last.q);
+      if (q_new !== null) {
+        treeA.push(Node({ x: goal.x, y: goal.y }, treeA.length - 1,
+                        last.cost + dist(last.q, goal)));
+        foundPath = backtrack(treeA);
+        drawPath(foundPath);
+      }
+    }
   }
 
-  // one iteration of the rrt_connect main loop from planner.py
+  // one iteration of the rrt_connect() main loop from planner.py
   function rrt_connect_step() {
     iterations++;
     if (iterations > MAX_ITERATIONS) { reset(); return; }
@@ -777,6 +813,44 @@ footer { padding: 56px 0 48px; }
     }
     // swap trees — mirrors the picker/placer swap in planner.py
     [treeA, treeB] = [treeB, treeA];
+  }
+
+  // SETUP / DRAWING / METRICS (widget-specific)
+
+  function reset() {
+    obstacles = [];
+    const count = 4 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < count; i++) {
+      obstacles.push({ x: rand(80, W - 180), y: rand(30, H - 110),
+                       w: rand(40, 110), h: rand(40, 100) });
+    }
+    start = { x: 36, y: H - 36 };
+    goal  = { x: W - 46, y: 46 };
+    while (in_obstacle(start)) start.y -= 10;
+    while (in_obstacle(goal))  goal.y  += 10;
+
+    treeA = [Node(start, -1, 0.0)]; treeA.color = SLATE; treeA.isStartTree = true;
+    if (planner === "rrt_connect") {
+      treeB = [Node(goal, -1, 0.0)]; treeB.color = STEEL; treeB.isStartTree = false;
+    } else {
+      treeB = null;
+    }
+    iterations = 0; foundPath = null;
+    drawBase();
+    updateStats();
+  }
+
+  // mirrors the metrics dict collected in planner.py
+  function updateStats() {
+    const vertices = treeA.length + (treeB ? treeB.length : 0);
+    let line = planner === "rrt" ? "rrt" : "rrt-connect";
+    line += " · iterations " + iterations + " · vertices " + vertices;
+    if (foundPath !== null) {
+      let path_cost = 0;
+      for (let k = 0; k < foundPath.length - 1; k++) path_cost += dist(foundPath[k], foundPath[k + 1]);
+      line += " · path cost " + Math.round(path_cost) + " px — solved";
+    }
+    statsEl.textContent = line;
   }
 
   function drawBase() {
@@ -810,22 +884,39 @@ footer { padding: 56px 0 48px; }
     drawMarkers();
   }
 
+  function step() { (planner === "rrt" ? rrt_step : rrt_connect_step)(); updateStats(); }
+
+  function runStatic() {
+    let guard = 0;
+    while (foundPath === null && guard < 5 * MAX_ITERATIONS) { step(); guard++; }
+  }
+
+  // TOGGLE
+  const buttons = document.querySelectorAll(".rrt-btn");
+  buttons.forEach(btn => btn.addEventListener("click", () => {
+    if (btn.dataset.planner === planner) return;
+    planner = btn.dataset.planner;
+    buttons.forEach(b => b.classList.toggle("active", b === btn));
+    if (timer) clearInterval(timer);
+    reset();
+    if (reduced) { runStatic(); } else { timer = setInterval(tick, 16); }
+  }));
+
   reset();
 
   if (reduced) {
     // static: run to completion instantly, no animation loop
-    let guard = 0;
-    while (foundPath === null && guard < 5 * MAX_ITERATIONS) { rrt_connect_step(); guard++; }
+    runStatic();
     return;
   }
 
   function tick() {
     if (foundPath !== null) {
-      clearInterval(timer);
-      setTimeout(() => { reset(); timer = setInterval(tick, 16); }, 2600);
+      clearInterval(timer); timer = null;
+      timer = setTimeout(() => { reset(); timer = setInterval(tick, 16); }, 2600);
       return;
     }
-    rrt_connect_step();
+    step();
   }
   timer = setInterval(tick, 16);
 })();
