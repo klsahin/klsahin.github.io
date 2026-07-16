@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Karla Sahin — Robotics & ECE</title>
+<meta name="description" content="Karla Sahin — Electrical & Computer Engineering + Robotics at Carnegie Mellon. Motion planning, embedded systems, digital design, and robot perception." />
+
+<!-- Open Graph (shows up when the link is shared) -->
+<meta property="og:title" content="Karla Sahin — Robotics & ECE" />
+<meta property="og:description" content="Motion planning, embedded systems, digital design, and robot perception. CMU ECE '28." />
+<meta property="og:type" content="website" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+<style>
+/* ============================================================
+   TOKENS — edit these to retheme the whole site
+   ============================================================ */
+:root {
+  --paper:      #F3F5F6;   /* page background */
+  --panel:      #FFFFFF;   /* cards */
+  --ink:        #17222B;   /* primary text */
+  --slate:      #5C6B78;   /* secondary text */
+  --line:       #DDE3E7;   /* borders + grid */
+  --accent:     #E8500A;   /* safety orange */
+  --accent-soft:#FDE9DD;   /* orange wash for tags */
+
+  --display: "Archivo", sans-serif;
+  --body:    "IBM Plex Sans", sans-serif;
+  --mono:    "IBM Plex Mono", monospace;
+
+  --maxw: 1080px;
+  --radius: 6px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--body);
+  color: var(--ink);
+  background-color: var(--paper);
+  /* faint grid-paper texture */
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 48px 48px;
+  line-height: 1.6;
+  font-size: 16px;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+a:focus-visible, button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+
+/* ============================================================
+   NAV
+   ============================================================ */
+nav {
+  position: sticky; top: 0; z-index: 20;
+  background: rgba(243,245,246,.92);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--line);
+}
+.nav-inner {
+  max-width: var(--maxw); margin: 0 auto; padding: 14px 24px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+}
+.nav-name {
+  font-family: var(--mono); font-size: 14px; font-weight: 500;
+  color: var(--ink); letter-spacing: .02em;
+}
+.nav-name a { color: inherit; }
+.nav-links { display: flex; gap: 22px; flex-wrap: wrap; }
+.nav-links a {
+  font-family: var(--mono); font-size: 13px; color: var(--slate);
+}
+.nav-links a:hover { color: var(--accent); text-decoration: none; }
+
+/* ============================================================
+   HERO
+   ============================================================ */
+header.hero {
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(255,255,255,.65), rgba(255,255,255,0));
+}
+.hero-inner {
+  max-width: var(--maxw); margin: 0 auto; padding: 72px 24px 64px;
+  display: grid; grid-template-columns: 1.15fr .85fr; gap: 48px; align-items: center;
+}
+.eyebrow {
+  font-family: var(--mono); font-size: 12px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 14px;
+}
+h1 {
+  font-family: var(--display); font-weight: 800;
+  font-size: clamp(38px, 5.5vw, 58px); line-height: 1.04;
+  letter-spacing: -0.015em; margin-bottom: 18px;
+}
+.hero-thesis {
+  font-size: 18px; color: var(--slate); max-width: 46ch; margin-bottom: 26px;
+}
+.hero-thesis strong { color: var(--ink); font-weight: 600; }
+.hero-cta { display: flex; gap: 12px; flex-wrap: wrap; }
+.btn {
+  display: inline-block; font-family: var(--mono); font-size: 13px;
+  padding: 10px 18px; border-radius: var(--radius);
+  border: 1px solid var(--ink); color: var(--ink); background: transparent;
+  transition: background .15s ease, color .15s ease;
+}
+.btn:hover { background: var(--ink); color: var(--paper); text-decoration: none; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary:hover { background: #c94406; border-color: #c94406; }
+
+/* RRT canvas panel */
+.rrt-panel {
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--panel); overflow: hidden;
+  box-shadow: 0 1px 3px rgba(23,34,43,.06);
+}
+.rrt-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 12px; border-bottom: 1px solid var(--line);
+  font-family: var(--mono); font-size: 11px; color: var(--slate);
+}
+.rrt-head .dot { color: var(--accent); }
+#rrt { display: block; width: 100%; height: auto; }
+
+/* ============================================================
+   SECTIONS
+   ============================================================ */
+section { padding: 64px 0; border-bottom: 1px solid var(--line); }
+.sec-label {
+  font-family: var(--mono); font-size: 12px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--slate); margin-bottom: 8px;
+}
+.sec-title {
+  font-family: var(--display); font-weight: 700;
+  font-size: clamp(26px, 3.4vw, 34px); margin-bottom: 32px; letter-spacing: -0.01em;
+}
+
+/* ============================================================
+   FEATURED (Locus) — placeholder slot
+   ============================================================ */
+.featured {
+  border: 1px solid var(--ink); border-radius: var(--radius);
+  background: var(--panel); overflow: hidden;
+  box-shadow: 4px 4px 0 rgba(23,34,43,.12);
+}
+.featured-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 14px 20px; border-bottom: 1px solid var(--line); flex-wrap: wrap;
+}
+.status {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--accent);
+  background: var(--accent-soft); border: 1px solid var(--accent);
+  border-radius: 999px; padding: 3px 12px;
+}
+.featured-body {
+  display: grid; grid-template-columns: 1.1fr .9fr; gap: 28px; padding: 24px 20px 28px;
+}
+.featured h3 {
+  font-family: var(--display); font-size: 24px; font-weight: 700; margin-bottom: 10px;
+}
+.featured p.placeholder-copy { color: var(--slate); margin-bottom: 16px; }
+.spec-list { list-style: none; }
+.spec-list li {
+  font-family: var(--mono); font-size: 13px; color: var(--slate);
+  padding: 7px 0; border-top: 1px dashed var(--line);
+}
+.spec-list li span { color: var(--ink); }
+.media-slot {
+  border: 2px dashed var(--line); border-radius: var(--radius);
+  min-height: 220px; display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 12px; color: var(--slate);
+  text-align: center; padding: 16px;
+  background: repeating-linear-gradient(45deg, transparent, transparent 12px, rgba(221,227,231,.35) 12px, rgba(221,227,231,.35) 13px);
+}
+
+/* ============================================================
+   PROJECT GRID
+   ============================================================ */
+.grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;
+}
+.card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 22px; display: flex; flex-direction: column; gap: 10px;
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.card:hover {
+  transform: translateY(-2px);
+  border-color: var(--ink);
+  box-shadow: 3px 3px 0 rgba(23,34,43,.10);
+}
+.card-meta {
+  display: flex; justify-content: space-between; gap: 10px; align-items: baseline;
+  font-family: var(--mono); font-size: 11px; color: var(--slate);
+  letter-spacing: .06em; text-transform: uppercase;
+}
+.card h3 { font-family: var(--display); font-size: 19px; font-weight: 700; line-height: 1.25; }
+.card p { color: var(--slate); font-size: 15px; flex-grow: 1; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag {
+  font-family: var(--mono); font-size: 11px; color: var(--ink);
+  border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px;
+  background: var(--paper);
+}
+.card-links { display: flex; gap: 14px; font-family: var(--mono); font-size: 13px; }
+
+/* ============================================================
+   EXPERIENCE TIMELINE
+   ============================================================ */
+.timeline { list-style: none; border-left: 2px solid var(--line); padding-left: 26px; }
+.timeline li { position: relative; padding-bottom: 30px; }
+.timeline li:last-child { padding-bottom: 0; }
+.timeline li::before {
+  content: ""; position: absolute; left: -33px; top: 7px;
+  width: 11px; height: 11px; border-radius: 50%;
+  background: var(--paper); border: 2px solid var(--accent);
+}
+.tl-when { font-family: var(--mono); font-size: 12px; color: var(--slate); letter-spacing: .06em; }
+.tl-role { font-family: var(--display); font-weight: 700; font-size: 17px; margin: 2px 0; }
+.tl-org  { color: var(--slate); font-size: 14px; }
+.timeline p { color: var(--slate); font-size: 15px; margin-top: 6px; max-width: 70ch; }
+
+/* ============================================================
+   PUBLICATIONS
+   ============================================================ */
+.pub {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 22px;
+}
+.pub-venue { font-family: var(--mono); font-size: 12px; color: var(--accent); letter-spacing: .08em; text-transform: uppercase; }
+.pub h3 { font-family: var(--display); font-size: 19px; font-weight: 700; margin: 6px 0 8px; }
+.pub p { color: var(--slate); font-size: 15px; }
+
+/* ============================================================
+   SKILLS
+   ============================================================ */
+.skill-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.skill-col h4 {
+  font-family: var(--mono); font-size: 12px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--slate); margin-bottom: 10px;
+}
+.skill-col ul { list-style: none; }
+.skill-col li {
+  font-size: 15px; padding: 5px 0; border-top: 1px dashed var(--line);
+}
+
+/* ============================================================
+   FOOTER / CONTACT
+   ============================================================ */
+footer { padding: 56px 0 48px; }
+.contact-line { font-size: 17px; max-width: 55ch; margin-bottom: 20px; }
+.foot-links { display: flex; gap: 20px; flex-wrap: wrap; font-family: var(--mono); font-size: 13px; margin-bottom: 28px; }
+.colophon { font-family: var(--mono); font-size: 12px; color: var(--slate); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 820px) {
+  .hero-inner { grid-template-columns: 1fr; padding: 48px 24px; }
+  .featured-body { grid-template-columns: 1fr; }
+  .grid { grid-template-columns: 1fr; }
+  .skill-cols { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ================= NAV ================= -->
+<nav>
+  <div class="nav-inner">
+    <div class="nav-name"><a href="#top">karla.sahin</a></div>
+    <div class="nav-links">
+      <a href="#featured">Now</a>
+      <a href="#projects">Projects</a>
+      <a href="#experience">Experience</a>
+      <a href="#publications">Publications</a>
+      <a href="#contact">Contact</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ================= HERO ================= -->
+<header class="hero" id="top">
+  <div class="hero-inner">
+    <div>
+      <div class="eyebrow">Robotics · ECE · Carnegie Mellon '28</div>
+      <h1>Karla Sahin</h1>
+      <p class="hero-thesis">
+        I build robots from the <strong>transistor up</strong> — motion planners in C++,
+        RTL on FPGAs, embedded sensing hardware, and perception pipelines that help
+        machines understand where they are and what they're holding.
+      </p>
+      <div class="hero-cta">
+        <a class="btn primary" href="#projects">See projects</a>
+        <a class="btn" href="https://github.com/klsahin" target="_blank" rel="noopener">GitHub</a>
+        <!-- TODO: drop your resume PDF into /assets/ and update the href -->
+        <a class="btn" href="assets/Karla_Sahin_Resume.pdf">Resume</a>
+      </div>
+    </div>
+
+    <!-- Signature element: live RRT exploration (see script at bottom).
+         With prefers-reduced-motion, it renders a single static tree instead. -->
+    <div class="rrt-panel" aria-hidden="true">
+      <div class="rrt-head">
+        <span>fig. 01 — sampling-based planner</span>
+        <span><span class="dot">●</span> RRT, live</span>
+      </div>
+      <canvas id="rrt" width="520" height="400"></canvas>
+    </div>
+  </div>
+</header>
+
+<!-- ================= FEATURED: LOCUS (placeholder) ================= -->
+<section id="featured">
+  <div class="wrap">
+    <div class="sec-label">Currently</div>
+    <h2 class="sec-title">Featured work</h2>
+
+    <div class="featured">
+      <div class="featured-head">
+        <span style="font-family:var(--mono); font-size:12px; color:var(--slate);">PROJ-00 · Wilmington, MA</span>
+        <span class="status">In progress — Summer 2026</span>
+      </div>
+      <div class="featured-body">
+        <div>
+          <h3>Robotics Software Test Engineering · Locus Robotics</h3>
+          <!-- ======================================================
+               TODO(Karla): Locus write-up goes here at the end of
+               the summer. Before publishing anything, check with
+               your manager about what's shareable publicly.
+               Suggested structure:
+                 1. One-paragraph problem statement
+                 2. Your approach / what you built
+                 3. Results (metrics if allowed, qualitative if not)
+                 4. What you learned
+               ====================================================== -->
+          <p class="placeholder-copy">
+            Write-up coming at the end of the summer. This slot is reserved for
+            my internship work on warehouse robotics at Locus — problem,
+            approach, and results to follow.
+          </p>
+          <ul class="spec-list">
+            <li>role — <span>Robotics Software Test Engineering Intern</span></li>
+            <li>timeline — <span>May – August 2026</span></li>
+            <li>stack — <span><!-- TODO: e.g., C++ · Python · ROS 2 · OpenCV --> TBD</span></li>
+            <li>focus — <span><!-- TODO: one line on the problem area --> TBD</span></li>
+          </ul>
+        </div>
+        <!-- TODO: replace this slot with an image/video once you have
+             approved media: <img src="assets/img/locus.jpg" alt="..."> -->
+        <div class="media-slot">
+          [ media slot ]<br />
+          demo video · system diagram · robot photo
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PROJECTS ================= -->
+<section id="projects">
+  <div class="wrap">
+    <div class="sec-label">Selected work</div>
+    <h2 class="sec-title">Projects</h2>
+
+    <div class="grid">
+
+      <div class="card">
+        <div class="card-meta"><span>Motion planning</span><span>Mar 2026</span></div>
+        <h3>High-DoF Robotic Arm Motion Planning</h3>
+        <p>
+          Sampling-based planners — RRT, RRT-Connect, RRT*, and PRM — for planar
+          arms up to 7 DoF, with a C++ collision-avoidance system that validates joint
+          configurations against 2D obstacle maps. All planners return collision-free
+          paths within a 5-second runtime budget, benchmarked on planning time,
+          path cost, and vertex count.
+        </p>
+        <div class="tags">
+          <span class="tag">C++</span><span class="tag">RRT / RRT*</span>
+          <span class="tag">PRM</span><span class="tag">16-350</span>
+        </div>
+        <div class="card-links">
+          <a href="https://github.com/bmc209/16350-Final-Project" target="_blank" rel="noopener">Code →</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-meta"><span>Digital design</span><span>Mar 2026</span></div>
+        <h3>Hardware-Accelerated RTL Game System</h3>
+        <p>
+          A SystemVerilog RTL system on FPGA managing high-speed game logic, input
+          synchronization, and real-time feedback: hierarchical FSM control path plus a
+          custom datapath checking 12-bit guesses against a master pattern with
+          nanosecond-level determinism, from 40 MHz to 200 MHz.
+        </p>
+        <div class="tags">
+          <span class="tag">SystemVerilog</span><span class="tag">FPGA</span>
+          <span class="tag">Vivado</span><span class="tag">FSM</span>
+        </div>
+        <!-- TODO: link repo or write-up if/when public -->
+      </div>
+
+      <div class="card">
+        <div class="card-meta"><span>Research · MIT CSAIL</span><span>Summer 2025</span></div>
+        <h3>Xspine — Motion Sensing in 3D-Printed Structures</h3>
+        <p>
+          Virtually modeled tactile and sensing feedback for assembly-free,
+          multi-material FDM-printed structures — force-tunable game controllers and
+          fidget toys — and architected a visualization interface processing eight
+          100 Hz joint signals to generate training data for AI deformation models.
+        </p>
+        <div class="tags">
+          <span class="tag">Python</span><span class="tag">Unity</span>
+          <span class="tag">React</span><span class="tag">HCI</span>
+        </div>
+        <div class="card-links">
+          <a href="https://doi.org/10.1145/3772318.3791317" target="_blank" rel="noopener">CHI 2026 paper →</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-meta"><span>Embedded sensing</span><span>Fall 2025</span></div>
+        <h3>Wearable Capacitive Sensing Circuits</h3>
+        <p>
+          Designed and tested embedded capacitive sensing circuits in C++ for
+          wearable medical devices in CMU's Semantic Signals Lab, working from
+          analog front-end behavior up through firmware.
+        </p>
+        <div class="tags">
+          <span class="tag">C++</span><span class="tag">Embedded</span>
+          <span class="tag">Circuits</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-meta"><span>Hackathon · Build18</span><span>Jan 2026</span></div>
+        <h3>Automatic Dispenser</h3>
+        <p>
+          Wired and programmed a four-servo automatic dispenser with
+          Arduino–Raspberry Pi UART communication, built in a one-week
+          hardware hackathon.
+        </p>
+        <div class="tags">
+          <span class="tag">Arduino</span><span class="tag">Raspberry Pi</span>
+          <span class="tag">UART</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-meta"><span>Embedded robotics</span><span>Apr 2025</span></div>
+        <h3>Tars Robot</h3>
+        <p>
+          Built, soldered, and programmed an embedded C++ robot with servo-driven
+          arms and an interactive LCD — hardware bring-up from bare components to
+          a working, interactive machine.
+        </p>
+        <div class="tags">
+          <span class="tag">C++</span><span class="tag">Servos</span>
+          <span class="tag">Soldering</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-meta"><span>Team lead · ChemE Cube</span><span>2025 –</span></div>
+        <h3>Direct Air Capture Hardware</h3>
+        <p>
+          As Senior Build Lead, architected the embedded systems and designed custom
+          PCBs for Arduino-based Direct Air Capture hardware — 5th place of 54 teams
+          at the 2025 AIChE Annual Student Conference.
+        </p>
+        <div class="tags">
+          <span class="tag">PCB design</span><span class="tag">Arduino</span>
+          <span class="tag">Leadership</span>
+        </div>
+      </div>
+
+      <!-- TODO: your GitHub has more repos (Lizarx, frox, DHCS) —
+           duplicate a card above and describe them when ready. -->
+
+    </div>
+  </div>
+</section>
+
+<!-- ================= EXPERIENCE ================= -->
+<section id="experience">
+  <div class="wrap">
+    <div class="sec-label">Where I've worked</div>
+    <h2 class="sec-title">Experience</h2>
+
+    <ul class="timeline">
+      <li>
+        <div class="tl-when">Summer 2026</div>
+        <div class="tl-role">Robotics Software Test Engineering Intern</div>
+        <div class="tl-org">Locus Robotics — Wilmington, MA</div>
+        <p><!-- TODO: 1–2 sentences once the summer wraps up. -->
+        Details coming soon — see the featured slot above.</p>
+      </li>
+      <li>
+        <div class="tl-when">Jan 2026 — present</div>
+        <div class="tl-role">Teaching Assistant, 18-220 Electronic Devices & Analog Circuits</div>
+        <div class="tl-org">Carnegie Mellon University</div>
+        <p>Lead two weekly recitations, run 3-hour labs, and debug circuits for 20+
+        students per lab with oscilloscopes, DMMs, signal generators, and power supplies.</p>
+      </li>
+      <li>
+        <div class="tl-when">Sep — Dec 2025</div>
+        <div class="tl-role">Undergraduate Researcher, Semantic Signals Lab</div>
+        <div class="tl-org">Carnegie Mellon University · Prof. Justin Chan</div>
+        <p>Embedded capacitive sensing circuits for wearable medical devices.</p>
+      </li>
+      <li>
+        <div class="tl-when">May — Aug 2025</div>
+        <div class="tl-role">Undergraduate Researcher, HCI Engineering Group</div>
+        <div class="tl-org">MIT CSAIL · Prof. Stefanie Mueller</div>
+        <p>Multi-material 3D-printed sensing structures (Xspine) — published at
+        CHI 2026 and UIST 2025.</p>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================= PUBLICATIONS ================= -->
+<section id="publications">
+  <div class="wrap">
+    <div class="sec-label">Peer-reviewed</div>
+    <h2 class="sec-title">Publications</h2>
+
+    <div class="pub">
+      <div class="pub-venue">ACM CHI 2026 · Full Paper & Interactive Demo — ACM UIST 2025 · Poster</div>
+      <h3>Xspine: Integrating Motion Sensing Capability into Dynamic Structures Using Multi-material FDM 3D Printing</h3>
+      <p>
+        Mingming Li, Jiaji Li, Haotian Chen*, Dingning Cao*, <strong>Karla Sahin*</strong>,
+        and Stefanie Mueller (*equal contribution) ·
+        <a href="https://doi.org/10.1145/3772318.3791317" target="_blank" rel="noopener">DOI: 10.1145/3772318.3791317</a>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SKILLS ================= -->
+<section id="skills">
+  <div class="wrap">
+    <div class="sec-label">Toolbox</div>
+    <h2 class="sec-title">Skills</h2>
+
+    <div class="skill-cols">
+      <div class="skill-col">
+        <h4>Languages & algorithms</h4>
+        <ul>
+          <li>C++ · C · Python · MATLAB</li>
+          <li>SystemVerilog</li>
+          <li>A* · RRT / RRT* · PRM</li>
+          <li>LaTeX · HTML/CSS</li>
+        </ul>
+      </div>
+      <div class="skill-col">
+        <h4>Hardware</h4>
+        <ul>
+          <li>FPGA (Vivado)</li>
+          <li>Arduino · Raspberry Pi</li>
+          <li>UART / I2C · PCB design</li>
+          <li>Oscilloscope · DMM · soldering</li>
+        </ul>
+      </div>
+      <div class="skill-col">
+        <h4>Software & tools</h4>
+        <ul>
+          <li>Git · Linux/Unix · VS Code</li>
+          <li>OpenCV</li>
+          <li>SOLIDWORKS · Fusion 360</li>
+          <li>Unity</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CONTACT / FOOTER ================= -->
+<footer id="contact">
+  <div class="wrap">
+    <div class="sec-label">Get in touch</div>
+    <p class="contact-line">
+      I'm always happy to talk about robotics, embedded systems, or research —
+      the fastest way to reach me is email.
+    </p>
+    <div class="foot-links">
+      <a href="mailto:klsahin@andrew.cmu.edu">klsahin@andrew.cmu.edu</a>
+      <a href="https://github.com/klsahin" target="_blank" rel="noopener">github.com/klsahin</a>
+      <a href="https://linkedin.com/in/karla-sahin/" target="_blank" rel="noopener">linkedin.com/in/karla-sahin</a>
+    </div>
+    <div class="colophon">© 2026 Karla Sahin · hand-built HTML/CSS, hosted on GitHub Pages · fig. 01 is a live RRT</div>
+  </div>
+</footer>
+
+<!-- ================= RRT ANIMATION =================
+     Grows a rapidly-exploring random tree from a start node toward a goal,
+     highlights the found path, pauses, then restarts with new obstacles.
+     Static single frame when prefers-reduced-motion is set. -->
+<script>
+(function () {
+  const canvas = document.getElementById("rrt");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const css = getComputedStyle(document.documentElement);
+  const INK    = css.getPropertyValue("--ink").trim()    || "#17222B";
+  const SLATE  = css.getPropertyValue("--slate").trim()  || "#5C6B78";
+  const LINE   = css.getPropertyValue("--line").trim()   || "#DDE3E7";
+  const ACCENT = css.getPropertyValue("--accent").trim() || "#E8500A";
+
+  const STEP = 22, GOAL_R = 14, MAX_NODES = 420;
+  let nodes, parent, obstacles, start, goal, found, pathIdx, timer;
+
+  function rand(a, b) { return a + Math.random() * (b - a); }
+  function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+
+  function inObstacle(p) {
+    return obstacles.some(o => p.x > o.x && p.x < o.x + o.w && p.y > o.y && p.y < o.y + o.h);
+  }
+  function segmentHits(a, b) {
+    // sample along the segment; fine for a decorative demo
+    const n = Math.ceil(dist(a, b) / 4);
+    for (let i = 1; i <= n; i++) {
+      const t = i / n;
+      if (inObstacle({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t })) return true;
+    }
+    return false;
+  }
+
+  function reset() {
+    obstacles = [];
+    const count = 4 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < count; i++) {
+      obstacles.push({ x: rand(80, W - 180), y: rand(30, H - 110), w: rand(40, 110), h: rand(40, 100) });
+    }
+    start = { x: 36, y: H - 36 };
+    goal  = { x: W - 46, y: 46 };
+    while (inObstacle(start)) start.y -= 10;
+    while (inObstacle(goal))  goal.y  += 10;
+    nodes = [start]; parent = [-1]; found = -1; pathIdx = null;
+    drawBase();
+  }
+
+  function extend() {
+    if (nodes.length > MAX_NODES) { reset(); return; }
+    // goal bias 8%
+    const target = Math.random() < 0.08 ? goal : { x: rand(0, W), y: rand(0, H) };
+    let ni = 0, best = Infinity;
+    for (let i = 0; i < nodes.length; i++) {
+      const d = dist(nodes[i], target);
+      if (d < best) { best = d; ni = i; }
+    }
+    const from = nodes[ni];
+    const d = dist(from, target);
+    const p = d <= STEP ? target : {
+      x: from.x + (target.x - from.x) / d * STEP,
+      y: from.y + (target.y - from.y) / d * STEP
+    };
+    if (inObstacle(p) || segmentHits(from, p)) return;
+    nodes.push(p); parent.push(ni);
+    drawEdge(from, p, LINE, 1);
+    drawNode(p, SLATE, 1.5);
+    if (dist(p, goal) < GOAL_R) {
+      found = nodes.length - 1;
+      tracePath();
+    }
+  }
+
+  function tracePath() {
+    pathIdx = [];
+    let i = found;
+    while (i !== -1) { pathIdx.push(i); i = parent[i]; }
+    // redraw path edges in accent
+    for (let k = 0; k < pathIdx.length - 1; k++) {
+      drawEdge(nodes[pathIdx[k]], nodes[pathIdx[k + 1]], ACCENT, 2.5);
+    }
+    drawMarkers();
+  }
+
+  function drawBase() {
+    ctx.clearRect(0, 0, W, H);
+    // grid
+    ctx.strokeStyle = "rgba(221,227,231,.55)"; ctx.lineWidth = 1;
+    for (let x = 0; x <= W; x += 24) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+    for (let y = 0; y <= H; y += 24) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+    // obstacles
+    ctx.fillStyle = "rgba(23,34,43,.10)";
+    ctx.strokeStyle = SLATE;
+    obstacles.forEach(o => { ctx.fillRect(o.x, o.y, o.w, o.h); ctx.strokeRect(o.x, o.y, o.w, o.h); });
+    drawMarkers();
+  }
+
+  function drawMarkers() {
+    // start
+    drawNode(start, INK, 5);
+    // goal ring
+    ctx.beginPath(); ctx.arc(goal.x, goal.y, GOAL_R, 0, Math.PI * 2);
+    ctx.strokeStyle = ACCENT; ctx.lineWidth = 2; ctx.stroke();
+    drawNode(goal, ACCENT, 4);
+  }
+
+  function drawNode(p, color, r) {
+    ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = color; ctx.fill();
+  }
+  function drawEdge(a, b, color, w) {
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+    ctx.strokeStyle = color; ctx.lineWidth = w; ctx.stroke();
+  }
+
+  reset();
+
+  if (reduced) {
+    // static: run to completion instantly, no animation loop
+    let guard = 0;
+    while (found === -1 && guard < 6000) { extend(); guard++; }
+    return;
+  }
+
+  function tick() {
+    if (found !== -1) {
+      clearInterval(timer);
+      setTimeout(() => { reset(); timer = setInterval(tick, 16); }, 2600);
+      return;
+    }
+    // a few extensions per frame keeps it lively without being frantic
+    for (let i = 0; i < 3; i++) if (found === -1) extend();
+  }
+  timer = setInterval(tick, 16);
+})();
+</script>
+
+</body>
+</html>
