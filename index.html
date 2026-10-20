@@ -162,45 +162,6 @@ section { padding: 64px 0; border-bottom: 1px solid var(--line); }
 }
 
 /* ============================================================
-   FEATURED (Locus) — placeholder slot
-   ============================================================ */
-.featured {
-  border: 1px solid var(--ink); border-radius: var(--radius);
-  background: var(--panel); overflow: hidden;
-  box-shadow: 4px 4px 0 rgba(23,34,43,.12);
-}
-.featured-head {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding: 14px 20px; border-bottom: 1px solid var(--line); flex-wrap: wrap;
-}
-.status {
-  font-family: var(--mono); font-size: 11px; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--accent);
-  background: var(--accent-soft); border: 1px solid var(--accent);
-  border-radius: 999px; padding: 3px 12px;
-}
-.featured-body {
-  display: grid; grid-template-columns: 1.1fr .9fr; gap: 28px; padding: 24px 20px 28px;
-}
-.featured h3 {
-  font-family: var(--display); font-size: 24px; font-weight: 700; margin-bottom: 10px;
-}
-.featured p.placeholder-copy { color: var(--slate); margin-bottom: 16px; }
-.spec-list { list-style: none; }
-.spec-list li {
-  font-family: var(--mono); font-size: 13px; color: var(--slate);
-  padding: 7px 0; border-top: 1px dashed var(--line);
-}
-.spec-list li span { color: var(--ink); }
-.media-slot {
-  border: 2px dashed var(--line); border-radius: var(--radius);
-  min-height: 220px; display: flex; align-items: center; justify-content: center;
-  font-family: var(--mono); font-size: 12px; color: var(--slate);
-  text-align: center; padding: 16px;
-  background: repeating-linear-gradient(45deg, transparent, transparent 12px, rgba(221,227,231,.35) 12px, rgba(221,227,231,.35) 13px);
-}
-
-/* ============================================================
    PROJECT GRID
    ============================================================ */
 .grid {
@@ -297,7 +258,6 @@ footer { padding: 56px 0 48px; }
   <div class="nav-inner">
     <div class="nav-name"><a href="#top">karla.sahin</a></div>
     <div class="nav-links">
-      <a href="#featured">Now</a>
       <a href="#projects">Projects</a>
       <a href="#experience">Experience</a>
       <a href="#publications">Publications</a>
@@ -342,53 +302,6 @@ footer { padding: 56px 0 48px; }
   </div>
 </header>
 
-<!-- ================= FEATURED: LOCUS (placeholder) ================= -->
-<section id="featured">
-  <div class="wrap">
-    <div class="sec-label">Currently</div>
-    <h2 class="sec-title">Featured work</h2>
-
-    <div class="featured">
-      <div class="featured-head">
-        <span style="font-family:var(--mono); font-size:12px; color:var(--slate);">PROJ-00 · Wilmington, MA</span>
-        <span class="status">In progress — Summer 2026</span>
-      </div>
-      <div class="featured-body">
-        <div>
-          <h3>Robotics Software Test Engineering · Locus Robotics</h3>
-          <!-- ======================================================
-               TODO(Karla): Locus write-up goes here at the end of
-               the summer. Before publishing anything, check with
-               your manager about what's shareable publicly.
-               Suggested structure:
-                 1. One-paragraph problem statement
-                 2. Your approach / what you built
-                 3. Results (metrics if allowed, qualitative if not)
-                 4. What you learned
-               ====================================================== -->
-          <p class="placeholder-copy">
-            Write-up coming at the end of the summer. This slot is reserved for
-            my internship work on warehouse robotics at Locus — problem,
-            approach, and results to follow.
-          </p>
-          <ul class="spec-list">
-            <li>role — <span>Robotics Software Test Engineering Intern</span></li>
-            <li>timeline — <span>May – August 2026</span></li>
-            <li>stack — <span><!-- TODO: e.g., C++ · Python · ROS 2 · OpenCV --> TBD</span></li>
-            <li>focus — <span><!-- TODO: one line on the problem area --> TBD</span></li>
-          </ul>
-        </div>
-        <!-- TODO: replace this slot with an image/video once you have
-             approved media: <img src="assets/img/locus.jpg" alt="..."> -->
-        <div class="media-slot">
-          [ media slot ]<br />
-          demo video · system diagram · robot photo
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- ================= PROJECTS ================= -->
 <section id="projects">
   <div class="wrap">
@@ -398,18 +311,47 @@ footer { padding: 56px 0 48px; }
     <div class="grid">
 
       <div class="card">
-        <div class="card-meta"><span>Motion planning</span><span>Mar 2026</span></div>
-        <h3>High-DoF Robotic Arm Motion Planning</h3>
+        <div class="card-meta"><span>Multi-robot planning</span><span>In progress</span></div>
+        <h3>Space Planning for Assembly and Repair</h3>
         <p>
-          Sampling-based planners — RRT, RRT-Connect, RRT*, and PRM — for planar
-          arms up to 7 DoF, with a C++ collision-avoidance system that validates joint
-          configurations against 2D obstacle maps. All planners return collision-free
-          paths within a 5-second runtime budget, benchmarked on planning time,
-          path cost, and vertex count.
+          Designing a decentralized planner for in-space assembly, combining
+          distributed priority negotiation, kinodynamic RRT* path planning, and
+          reactive fallback control for unreliable localization and intermittent
+          communication. Building an execution-time repair system with
+          reinforcement-learning-guided task reassignment, retiming, and rerouting.
         </p>
         <div class="tags">
-          <span class="tag">C++</span><span class="tag">RRT / RRT*</span>
-          <span class="tag">PRM</span><span class="tag">16-350</span>
+          <span class="tag">Multi-robot systems</span><span class="tag">RRT*</span>
+          <span class="tag">Reinforcement learning</span><span class="tag">Robotics</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-meta"><span>Embedded systems</span><span>In progress</span></div>
+        <h3>Bare-Metal ARM Kernel</h3>
+        <p>
+          Wrote an assembly bootloader and register-level UART, I2C, ADC, and LCD
+          drivers for an STM32 ARM Cortex-M4. Built interrupt-driven UART ring
+          buffers, user/kernel privilege separation with an SVC syscall handler
+          for newlib, and timer-interrupt PWM servo control.
+        </p>
+        <div class="tags">
+          <span class="tag">C</span><span class="tag">ARM Assembly</span>
+          <span class="tag">STM32</span><span class="tag">Embedded</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-meta"><span>Motion planning</span><span>May 2026</span></div>
+        <h3>High-DoF Robotic Arm Motion Planning</h3>
+        <p>
+          Implemented RRT, RRT-Connect, RRT*, and PRM planners in C++ for robotic
+          arms up to 7 DoF. Built a collision-avoidance system coordinating two
+          UR5e arms to pick, hand off, and place an object in PyBullet simulation.
+        </p>
+        <div class="tags">
+          <span class="tag">C++</span><span class="tag">RRT / RRT-Connect / RRT*</span>
+          <span class="tag">PRM</span><span class="tag">PyBullet</span>
         </div>
         <div class="card-links">
           <a href="https://github.com/bmc209/16350-Final-Project" target="_blank" rel="noopener">Code →</a>
@@ -417,97 +359,18 @@ footer { padding: 56px 0 48px; }
       </div>
 
       <div class="card">
-        <div class="card-meta"><span>Digital design</span><span>Mar 2026</span></div>
+        <div class="card-meta"><span>Digital systems</span><span>April 2026</span></div>
         <h3>Hardware-Accelerated RTL Game System</h3>
         <p>
-          A SystemVerilog RTL system on FPGA managing high-speed game logic, input
-          synchronization, and real-time feedback: hierarchical FSM control path plus a
-          custom datapath checking 12-bit guesses against a master pattern with
-          nanosecond-level determinism, from 40 MHz to 200 MHz.
+          Designed a SystemVerilog RTL system in Vivado for high-speed game logic
+          and real-time feedback on FPGA, with an FSM-based control path and
+          custom datapath for 12-bit input processing at 40–200 MHz.
         </p>
         <div class="tags">
           <span class="tag">SystemVerilog</span><span class="tag">FPGA</span>
           <span class="tag">Vivado</span><span class="tag">FSM</span>
         </div>
-        <!-- TODO: link repo or write-up if/when public -->
       </div>
-
-      <div class="card">
-        <div class="card-meta"><span>Research · MIT CSAIL</span><span>Summer 2025</span></div>
-        <h3>Xspine — Motion Sensing in 3D-Printed Structures</h3>
-        <p>
-          Virtually modeled tactile and sensing feedback for assembly-free,
-          multi-material FDM-printed structures — force-tunable game controllers and
-          fidget toys — and architected a visualization interface processing eight
-          100 Hz joint signals to generate training data for AI deformation models.
-        </p>
-        <div class="tags">
-          <span class="tag">Python</span><span class="tag">Unity</span>
-          <span class="tag">React</span><span class="tag">HCI</span>
-        </div>
-        <div class="card-links">
-          <a href="https://doi.org/10.1145/3772318.3791317" target="_blank" rel="noopener">CHI 2026 paper →</a>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-meta"><span>Embedded sensing</span><span>Fall 2025</span></div>
-        <h3>Wearable Capacitive Sensing Circuits</h3>
-        <p>
-          Designed and tested embedded capacitive sensing circuits in C++ for
-          wearable medical devices in CMU's Semantic Signals Lab, working from
-          analog front-end behavior up through firmware.
-        </p>
-        <div class="tags">
-          <span class="tag">C++</span><span class="tag">Embedded</span>
-          <span class="tag">Circuits</span>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-meta"><span>Hackathon · Build18</span><span>Jan 2026</span></div>
-        <h3>Automatic Dispenser</h3>
-        <p>
-          Wired and programmed a four-servo automatic dispenser with
-          Arduino–Raspberry Pi UART communication, built in a one-week
-          hardware hackathon.
-        </p>
-        <div class="tags">
-          <span class="tag">Arduino</span><span class="tag">Raspberry Pi</span>
-          <span class="tag">UART</span>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-meta"><span>Embedded robotics</span><span>Apr 2025</span></div>
-        <h3>Tars Robot</h3>
-        <p>
-          Built, soldered, and programmed an embedded C++ robot with servo-driven
-          arms and an interactive LCD — hardware bring-up from bare components to
-          a working, interactive machine.
-        </p>
-        <div class="tags">
-          <span class="tag">C++</span><span class="tag">Servos</span>
-          <span class="tag">Soldering</span>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-meta"><span>Team lead · ChemE Cube</span><span>2025 –</span></div>
-        <h3>Direct Air Capture Hardware</h3>
-        <p>
-          As Senior Build Lead, architected the embedded systems and designed custom
-          PCBs for Arduino-based Direct Air Capture hardware — 5th place of 54 teams
-          at the 2025 AIChE Annual Student Conference.
-        </p>
-        <div class="tags">
-          <span class="tag">PCB design</span><span class="tag">Arduino</span>
-          <span class="tag">Leadership</span>
-        </div>
-      </div>
-
-      <!-- TODO: your GitHub has more repos (Lizarx, frox, DHCS) —
-           duplicate a card above and describe them when ready. -->
 
     </div>
   </div>
@@ -521,15 +384,17 @@ footer { padding: 56px 0 48px; }
 
     <ul class="timeline">
       <li>
-        <div class="tl-when">Summer 2026</div>
+        <div class="tl-when">May 2026 — present</div>
         <div class="tl-role">Robotics Software Test Engineering Intern</div>
         <div class="tl-org">Locus Robotics — Wilmington, MA</div>
-        <p><!-- TODO: 1–2 sentences once the summer wraps up. -->
-        Details coming soon — see the featured slot above.</p>
+        <p>Built ROS 2 calibration validation and OpenCV diagnostics for a 6-DoF
+        picking arm and multi-camera rig. Also delivered fleet health and pick
+        performance dashboards, controller telemetry integration, and Gazebo
+        simulation and CI tools.</p>
       </li>
       <li>
         <div class="tl-when">Jan 2026 — present</div>
-        <div class="tl-role">Teaching Assistant, 18-220 Electronic Devices & Analog Circuits</div>
+        <div class="tl-role">Teaching Assistant (Lab Lead), 18-220 Electronic Devices & Analog Circuits</div>
         <div class="tl-org">Carnegie Mellon University</div>
         <p>Lead two weekly recitations, run 3-hour labs, and debug circuits for 20+
         students per lab with oscilloscopes, DMMs, signal generators, and power supplies.</p>
