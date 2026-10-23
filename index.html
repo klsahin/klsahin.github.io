@@ -113,6 +113,10 @@ h1 {
   font-size: 19px; color: var(--slate); max-width: 48ch; margin-bottom: 26px;
 }
 .hero-thesis strong { color: var(--ink); font-weight: 600; }
+.hero-note {
+  font-family: var(--mono); font-size: 13px; line-height: 1.8;
+  color: var(--slate); margin: -8px 0 24px;
+}
 .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; }
 .btn {
   display: inline-block; font-family: var(--mono); font-size: 13px;
@@ -301,6 +305,20 @@ section { padding: 76px 0; border-bottom: 1px solid var(--line); }
 .timeline .media-placeholder.locus-image .media-image-crop img {
   object-position: center 56%; transform: scale(1.3);
 }
+.activity-grid {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px;
+}
+.activity {
+  padding: 20px; border: 1px solid var(--line); border-top: 3px solid var(--accent2);
+  background: var(--panel);
+}
+.activity-when {
+  font-family: var(--mono); font-size: 12px; color: var(--slate);
+}
+.activity h3 {
+  font-family: var(--display); font-size: 18px; line-height: 1.3; margin: 8px 0;
+}
+.activity p { color: var(--slate); font-size: 15px; }
 
 /* ============================================================
    PUBLICATIONS
@@ -313,6 +331,11 @@ section { padding: 76px 0; border-bottom: 1px solid var(--line); }
 .pub-venue { font-family: var(--mono); font-size: 12px; color: var(--accent); letter-spacing: .08em; text-transform: uppercase; }
 .pub h3 { font-family: var(--display); font-size: 19px; font-weight: 700; margin: 6px 0 8px; }
 .pub p { color: var(--slate); font-size: 16px; }
+
+/* ============================================================
+   RESUME
+   ============================================================ */
+.resume-download { margin-top: 18px; }
 
 /* ============================================================
    SKILLS
@@ -342,6 +365,7 @@ footer { padding: 56px 0 48px; }
   .hero-inner { grid-template-columns: 1fr; padding: 48px 24px; }
   .case-study { grid-template-columns: 1fr; gap: 12px; }
   .timeline li { grid-template-columns: 1fr; gap: 14px; }
+  .activity-grid { grid-template-columns: 1fr; }
   .skill-cols { grid-template-columns: 1fr; }
 }
 
@@ -363,7 +387,9 @@ footer { padding: 56px 0 48px; }
     <div class="nav-links">
       <a href="#projects">Projects</a>
       <a href="#experience">Experience</a>
+      <a href="#beyond">Beyond projects</a>
       <a href="#publications">Publications</a>
+      <a href="#resume">Resume</a>
       <a href="#skills">Skills</a>
       <a href="#contact">Contact</a>
     </div>
@@ -381,10 +407,14 @@ footer { padding: 56px 0 48px; }
         calibration and perception</strong> for warehouse robots to multi-robot
         motion planning, bare-metal embedded software, and FPGA design.
       </p>
+      <p class="hero-note">
+        B.S. ECE + Robotics (intended), CMU · May 2028 · GPA 3.85, Dean's List<br>
+        Seeking Summer 2027 robotics and embedded software internships
+      </p>
       <div class="hero-cta">
         <a class="btn primary" href="#projects">See projects</a>
         <a class="btn" href="https://github.com/klsahin" target="_blank" rel="noopener">GitHub</a>
-        <a class="btn" href="Karla%20Sahin%20Resume%20-%20Robotics_Embedded.pdf">Resume</a>
+        <a class="btn" href="#resume">View resume</a>
       </div>
     </div>
 
@@ -410,15 +440,10 @@ footer { padding: 56px 0 48px; }
   <div class="wrap">
     <div class="sec-label">Engineering notebook · selected work</div>
     <h2 class="sec-title">Projects</h2>
-    <p class="section-intro">
-      A closer look at the systems I design—from multi-robot planning and embedded
-      kernels to motion planning and FPGA logic.
-    </p>
-
     <article class="case-study">
-      <div class="case-index">01 / ROBOTICS<span>In progress</span></div>
+      <div class="case-index">01 / ROBOTICS<span>16-891 · In progress</span></div>
       <div class="case-content">
-        <h3>Space Planning for Assembly and Repair</h3>
+        <h3>Space Planning for Assembly and Repair (SPAR)</h3>
         <p class="case-summary">
           Designing a decentralized multi-robot planner for in-space assembly,
           where robots must coordinate despite unreliable localization and
@@ -433,7 +458,8 @@ footer { padding: 56px 0 48px; }
           <div class="case-detail">
             <h4>Execution-time repair</h4>
             <p>Developing RL-guided task reassignment, retiming, and rerouting
-            for a free-flying robot fleet under communication loss and sensor drift.</p>
+            for a free-flying robot fleet facing communication loss, sensor drift,
+            and partially known maps.</p>
           </div>
         </div>
         <div class="tags">
@@ -451,12 +477,13 @@ footer { padding: 56px 0 48px; }
     </article>
 
     <article class="case-study">
-      <div class="case-index">02 / EMBEDDED<span>In progress</span></div>
+      <div class="case-index">02 / EMBEDDED<span>18-349 · In progress</span></div>
       <div class="case-content">
         <h3>Bare-Metal ARM Kernel</h3>
         <p class="case-summary">
           Building a bare-metal kernel for an STM32 ARM Cortex-M4, from assembly
-          boot to interrupt-driven peripheral control.
+          boot to interrupt-driven peripheral control, then using it to drive an
+          autonomous robot car.
         </p>
         <div class="case-details">
           <div class="case-detail">
@@ -482,7 +509,7 @@ footer { padding: 56px 0 48px; }
     </article>
 
     <article class="case-study">
-      <div class="case-index">03 / MOTION<span>May 2026</span></div>
+      <div class="case-index">03 / MOTION<span>16-350 · May 2026</span></div>
       <div class="case-content">
         <h3>High-DoF Robotic Arm Motion Planning</h3>
         <p class="case-summary">
@@ -516,7 +543,7 @@ footer { padding: 56px 0 48px; }
     </article>
 
     <article class="case-study">
-      <div class="case-index">04 / DIGITAL DESIGN<span>April 2026</span></div>
+      <div class="case-index">04 / DIGITAL DESIGN<span>18-240 · April 2026</span></div>
       <div class="case-content">
         <h3>Hardware-Accelerated RTL Game System</h3>
         <p class="case-summary">
@@ -544,6 +571,37 @@ footer { padding: 56px 0 48px; }
         </figure>
       </div>
     </article>
+
+    <article class="case-study">
+      <div class="case-index">05 / RESEARCH<span>CHI 2026 · UIST 2025</span></div>
+      <div class="case-content">
+        <h3>Xspine: Sensing Structures</h3>
+        <p class="case-summary">
+          Built software interfaces and virtual prototypes for flexible,
+          multi-material 3D-printed structures that sense their own motion.
+        </p>
+        <div class="case-details">
+          <div class="case-detail">
+            <h4>Interactive applications</h4>
+            <p>Developed five interfaces that turn eight joint signals streamed
+            at 100 Hz into live input for games and interactive toys.</p>
+          </div>
+          <div class="case-detail">
+            <h4>Virtual prototypes</h4>
+            <p>Modeled force-tunable game controllers and fidget toys using
+            Python, Unity, and React.</p>
+          </div>
+        </div>
+        <div class="tags">
+          <span class="tag">Motion sensing</span><span class="tag">Python</span>
+          <span class="tag">Unity</span><span class="tag">React</span>
+        </div>
+        <div class="case-links">
+          <a href="https://doi.org/10.1145/3772318.3791317" target="_blank" rel="noopener">CHI 2026 full paper &amp; interactive demo →</a>
+          · <a href="https://doi.org/10.1145/3746058.3758350" target="_blank" rel="noopener">UIST 2025 Adjunct poster →</a>
+        </div>
+      </div>
+    </article>
   </div>
 </section>
 
@@ -559,10 +617,12 @@ footer { padding: 56px 0 48px; }
           <div class="tl-when">May 2026 — present</div>
           <div class="tl-role">Robotics Software Test Engineering Intern</div>
           <div class="tl-org"><strong><a href="https://locusrobotics.com/" target="_blank" rel="noopener">Locus Robotics</a></strong> · Wilmington, MA</div>
-          <p>Built ROS 2 calibration validation and OpenCV diagnostics for a <strong>6-DoF
-          picking arm and multi-camera rig</strong>. Also delivered <strong>fleet health and pick
-          performance dashboards</strong>, controller telemetry integration, and Gazebo
-          simulation and CI tools.</p>
+          <p>Built ROS 2 hand-eye checks using fiducial detection, PnP, and TF pose
+          composition, plus OpenCV reprojection-error and point-cloud visualizers to
+          diagnose drift without recalibration. Tested on Hardware-in-the-Loop benches
+          with NVIDIA Orins; also shipped customer-site dashboards for network health
+          and pick performance, ROS-integrated controller telemetry for lighting,
+          Gazebo simulation, and state-machine diagrams generated in CI.</p>
           </div>
           <figure class="media-placeholder has-image locus-image">
             <div class="media-image-crop">
@@ -576,8 +636,8 @@ footer { padding: 56px 0 48px; }
           <div class="tl-when">Jan 2026 — present</div>
           <div class="tl-role">Teaching Assistant (Lab Lead)</div>
           <div class="tl-org"><strong>Carnegie Mellon University</strong> · <a href="https://courses.ece.cmu.edu/18220" target="_blank" rel="noopener">18-220 Electronic Devices & Analog Circuits</a></div>
-          <p>Lead two weekly recitations and 3-hour labs, supporting <strong>20+ students per lab</strong>
-          with course concepts and hands-on circuit debugging.</p>
+          <p>Support <strong>130+ students per semester</strong> through two weekly
+          recitations, 3-hour labs, office hours, and hands-on circuit debugging.</p>
           </div>
           <figure class="media-placeholder has-image">
             <img src="18-220-buck-converter.png" alt="Buck converter circuit diagram">
@@ -609,6 +669,52 @@ footer { padding: 56px 0 48px; }
           </figure>
         </li>
       </ul>
+  </div>
+</section>
+
+<!-- ================= BEYOND PROJECTS ================= -->
+<section id="beyond">
+  <div class="wrap">
+    <div class="sec-label">Teaching · teams · outreach</div>
+    <h2 class="sec-title">Beyond projects</h2>
+    <p class="section-intro">
+      Building engineering communities through student teams, teaching, and outreach.
+    </p>
+    <div class="activity-grid">
+      <article class="activity">
+        <div class="activity-when">Jan 2025 — present</div>
+        <h3>Senior Build Lead · ChemE Cube</h3>
+        <p>Lead weekly builds of CMU's Direct Air Capture system. The team placed
+        <strong>5th out of 54</strong> at the 2025 AIChE Annual Conference.</p>
+      </article>
+      <article class="activity">
+        <div class="activity-when">Jan 2025 — present</div>
+        <h3>SWE++ Curriculum Lead</h3>
+        <p>With CMU's Society of Women Engineers, taught <strong>20+ middle
+        schoolers</strong> in an 8-week Python camp, wrote lessons and starter
+        code, and managed volunteers.</p>
+      </article>
+      <article class="activity">
+        <div class="activity-when">Sep 2026 — present</div>
+        <h3>Software &amp; Perception · NASA Lunabotics</h3>
+        <p>Contribute software and perception to CMU's team for the NASA
+        Lunabotics university robotics competition.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ================= RESUME ================= -->
+<section id="resume">
+  <div class="wrap">
+    <div class="sec-label">PDF downloads</div>
+    <h2 class="sec-title">Resume &amp; portfolio</h2>
+    <a class="btn primary resume-download" href="Karla%20Sahin%20Resume%20-%20Robotics_Embedded.pdf" download>
+      Download resume (PDF)
+    </a>
+    <a class="btn resume-download" href="Karla_Sahin_Portfolio.pdf" download>
+      Download portfolio (PDF)
+    </a>
   </div>
 </section>
 
@@ -658,10 +764,11 @@ footer { padding: 56px 0 48px; }
       <div class="skill-col">
         <h4>Robotics & software</h4>
         <ul>
-          <li>ROS 2 · Gazebo · OpenCV · Docker</li>
+          <li>ROS 2 · Gazebo · OpenCV · TF · PnP</li>
           <li>Linux · Git · CI/CD · GDB · pytest</li>
-          <li>Grafana · VictoriaMetrics</li>
-          <li>A* · RRT / PRM · MAPF</li>
+          <li>Grafana · VictoriaMetrics · HIL</li>
+          <li>A* · RRT / RRT* · PRM · MAPF · RL</li>
+          <li>Unity · React</li>
         </ul>
       </div>
       <div class="skill-col">
